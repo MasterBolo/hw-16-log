@@ -1,0 +1,56 @@
+- name: log-server | set timezone, configure rsyslog, install and configure auditd
+  hosts: log
+  become: true
+  
+  tasks: 
+    - name: set timezone to Asia/Yekaterinburg
+      timezone:
+        name: Asia/Yekaterinburg
+
+    - name: rsyslog | Configure RSYSLOG to recieve logs
+      template:
+        src: files/log/rsyslog.conf
+        dest: /etc/rsyslog.conf
+      notify:
+        - restart rsyslog
+      tags:
+        - rsyslog-configuration
+
+    - name: auditd | Configure Auditd for recieve logs
+      template:
+        src: files/log/auditd.conf
+        dest: /etc/audit/auditd.conf
+      tags:
+        - auditd-configurations
+
+    - name: auditd | Configure Auditd for restart service
+      template: 
+        src: files/log/auditd.service
+        dest: /usr/lib/systemd/system/auditd.service
+      tags:
+        - auditd-configurations
+
+    - name: reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: auditd | restart auditd
+      service:
+         name: auditd
+         state: restarted
+
+  handlers:
+
+    - name: restart rsyslog
+      systemd:
+        name: rsyslog
+        state: restarted
+        enabled: yes
+
+    - name: restart auditd
+      systemd:
+        name: auditd
+        state: restarted
+        enabled: yes
+
+

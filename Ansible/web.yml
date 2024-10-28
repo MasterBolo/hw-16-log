@@ -1,0 +1,112 @@
+- name: web-server | set timezone, install and configure nginx, install and configure rsyslog install and configure auditd
+  hosts: web
+  become: true
+  
+  tasks: 
+    - name: set timezone to Asia/Yekaterinburg
+      timezone:
+        name: Asia/Yekaterinburg
+
+    - name: update
+      apt:
+        update_cache=yes
+      tags:
+        - update apt
+
+    - name: NGINX | Install NGINX
+      apt:
+        name: nginx
+        state: latest
+      tags:
+        -nginx-package
+
+    - name: NGINX | Create NGINX config file from template
+      template:
+        src: files/web/nginx.conf
+        dest: /etc/nginx/nginx.conf
+      notify:
+        - reload nginx
+      tags:
+        - nginx-configuration
+
+    - name: rsyslog | configure rsyslog
+      template:
+        src: files/web/all.conf
+        dest: /etc/rsyslog.d/all.conf
+      notify:
+        - restart rsyslog
+      tags:
+        - rsyslog-configuration
+      
+    - name: auditd | install auditd
+      apt:
+        name: auditd
+        state: latest
+      tags:
+        -auditd-package
+
+    - name: auditd | configure auditd
+      template:
+        src: files/web/auditd.conf
+        dest: /etc/audit/auditd.conf
+      tags:
+        - auditd-configurations
+
+    - name: audispd-plugins | install audispd-plugins
+      apt:
+        name: audispd-plugins
+        state: latest
+      tags:
+        -audispd-package
+
+    - name: audispd-plugins | configure transfer logs to server
+      template:
+        src: files/web/audisp-remote.conf
+        dest: /etc/audit/audisp-remote.conf
+      tags:
+        - auditd-configurations
+
+    - name: audispd-plugins | configure transfer logs to server
+      template:
+        src: files/web/au-remote.conf
+        dest: /etc/audit/plugins.d/au-remote.conf
+      tags:
+        - auditd-configurations
+
+    - name: audit-rules | configure audit for nginx
+      copy:
+        dest: /etc/audit/rules.d/audit.rules
+        src: files/web/audit.rules
+        owner: root
+        group: root
+        mode: 0640
+      notify:
+        - restart auditd
+      tags:
+        - auditd-configurations
+
+  handlers:
+    - name: restart nginx
+      systemd:
+        name: nginx
+        state: restarted
+        enabled: yes
+
+    - name: reload nginx
+      systemd:
+        name: nginx
+        state: reloaded
+
+    - name: restart rsyslog
+      systemd:
+        name: nginx
+        state: restarted
+        enabled: yes
+
+    - name: restart auditd
+      systemd:
+        name: auditd
+        state: restarted
+        enabled: yes
+
+
