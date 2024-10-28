@@ -106,8 +106,7 @@ tasks:
         -auditd-package
 ```
 
-	Настраиваем auditd отредактировав в файле /etc/auditd.conf
-следующие строки :
+	Настраиваем auditd отредактировав в файле /etc/auditd.conf следующие строки :
 ````
 log_group = root
 name_format = HOSTNAME
@@ -132,7 +131,7 @@ name_format = HOSTNAME
       tags:
         -audispd-package
 ````
-Редактируем фаил /etc/audit/audisp-remote.conf/ добавив следующие строки:
+Редактируем фаил /etc/audit/audisp-remote.conf добавив следующие строки:
 ````
 remote_server = 192.168.56.13
 port = 60
